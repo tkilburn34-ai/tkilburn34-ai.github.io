@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pen Click Morse</title>
+<meta name="description" content="Send Morse code by clicking a pen. Your phone listens and turns the clicks into text.">
+<meta name="theme-color" content="#f2f4f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e141b" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><img src="icons/icon.svg" alt="" width="28" height="28"><span>Pen Click <b>Morse</b></span></div>
+    <div class="tabs" role="tablist" aria-label="Mode">
+      <button role="tab" id="tab-decode" aria-selected="true" aria-controls="view-decode">Decode</button>
+      <button role="tab" id="tab-practice" aria-selected="false" aria-controls="view-practice">Practice</button>
+    </div>
+    <button class="icon-btn" id="openSettings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+    </button>
+  </header>
+
+  <main>
+    <section id="view-decode" class="card message" role="tabpanel" aria-labelledby="tab-decode">
+      <div class="message-text" aria-live="polite"><span id="text"></span><span class="caret" aria-hidden="true"></span></div>
+      <div class="message-tools">
+        <button id="btnSpace">Space</button>
+        <button id="btnBack">Delete</button>
+        <button id="btnCopy">Copy</button>
+        <button id="btnShare" hidden>Share</button>
+        <button id="btnClear">Clear</button>
+      </div>
+    </section>
+
+    <section id="view-practice" class="card practice" role="tabpanel" aria-labelledby="tab-practice" hidden>
+      <p class="eyebrow">Send this letter</p>
+      <div class="target" id="target">K</div>
+      <div class="target-code" id="targetCode">–·–</div>
+      <p class="practice-result" id="practiceResult" aria-live="polite">One click is a dot, a double click is a dash.</p>
+      <div class="practice-tools">
+        <button id="btnHint">Hide pattern</button>
+        <button id="btnSkip">Skip</button>
+        <span class="streak">Streak <b id="streak">0</b></span>
+      </div>
+    </section>
+
+    <section class="now" aria-live="polite">
+      <span class="sym" id="sym"></span>
+      <span class="guess" id="guess">Tap below or start listening</span>
+    </section>
+
+    <div class="tape" aria-hidden="true"><canvas id="tape"></canvas></div>
+    <p class="status" id="status"><span class="dot"></span><span id="statusText">Microphone off</span></p>
+  </main>
+
+  <footer class="controls">
+    <button class="pad" id="pad">Tap here to click<small>or press the space bar</small></button>
+    <button class="mic" id="mic" aria-pressed="false">
+      <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M12 14.5a3.5 3.5 0 0 0 3.5-3.5V5.5a3.5 3.5 0 1 0-7 0V11a3.5 3.5 0 0 0 3.5 3.5Zm6-3.5h-1.6a4.4 4.4 0 0 1-8.8 0H6a6 6 0 0 0 5.2 5.9V20h1.6v-3.1A6 6 0 0 0 18 11Z"/></svg>
+      <span id="micLabel">Listen</span>
+    </button>
+  </footer>
+</div>
+
+<div class="limit" id="limitBanner" hidden>
+  <p><b>That's the end of the free web demo.</b> Get the Android app to keep decoding with no limits.</p>
+  <a class="btn primary" id="playLink" href="#" target="_blank" rel="noopener">Get it on Google Play</a>
+</div>
+
+<!-- Settings -->
+<dialog id="settings" class="sheet" aria-labelledby="settingsTitle">
+  <div class="sheet-head"><h2 id="settingsTitle">Settings</h2><button class="icon-btn" data-close aria-label="Close">✕</button></div>
+  <div class="sheet-body">
+    <button class="btn primary wide" id="btnTeach">Teach it your pen</button>
+    <p class="hint">Clicks your pen a few times so the app learns its sound and your double-click speed. Best done once in each new place.</p>
+
+    <h3>Hearing</h3>
+    <div class="field">
+      <label for="sSnr">Click threshold <output id="oSnr"></output></label>
+      <input type="range" id="sSnr" min="6" max="30" step="1">
+      <small>How much louder than the room a click must be. Lower hears quieter pens; higher ignores more noise.</small>
+    </div>
+    <div class="field">
+      <label for="sEcho">Echo filter <output id="oEcho"></output></label>
+      <input type="range" id="sEcho" min="40" max="300" step="10">
+      <small>Ignores the softer second click many pens make when you let go.</small>
+    </div>
+    <label class="toggle"><input type="checkbox" id="sKnock"><span>Ignore table knocks and bumps</span></label>
+
+    <h3>Timing</h3>
+    <div class="field">
+      <label for="sDash">Double-click window <output id="oDash"></output></label>
+      <input type="range" id="sDash" min="150" max="650" step="10">
+      <small>Two clicks closer than this make a dash.</small>
+    </div>
+    <div class="field">
+      <label for="sLetter">Letter pause <output id="oLetter"></output></label>
+      <input type="range" id="sLetter" min="500" max="2500" step="50">
+      <small>Silence this long ends a letter.</small>
+    </div>
+    <div class="field">
+      <label for="sWord">Word pause <output id="oWord"></output></label>
+      <input type="range" id="sWord" min="1500" max="6000" step="100">
+      <small>Silence this long adds a space.</small>
+    </div>
+
+    <h3>Feel</h3>
+    <label class="toggle"><input type="checkbox" id="sVibrate"><span>Vibrate when a click is heard</span></label>
+
+    <div class="sheet-links">
+      <button class="btn" id="btnChart">Morse code chart</button>
+      <a class="btn" href="privacy.html">Privacy</a>
+      <button class="btn" id="btnReset">Reset settings</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Code chart -->
+<dialog id="chartDlg" class="sheet" aria-labelledby="chartTitle">
+  <div class="sheet-head"><h2 id="chartTitle">Morse code</h2><button class="icon-btn" data-close aria-label="Close">✕</button></div>
+  <div class="sheet-body">
+    <ul class="how">
+      <li><b>click</b><span>dot ·</span></li>
+      <li><b>click-click</b><span>dash –</span></li>
+      <li><b>short pause</b><span>next letter</span></li>
+      <li><b>long pause</b><span>space</span></li>
+      <li><b>6 clicks</b><span>erase last letter</span></li>
+    </ul>
+    <div class="chart" id="chart"></div>
+  </div>
+</dialog>
+
+<!-- First-run setup / pen training -->
+<dialog id="setup" class="sheet setup" aria-labelledby="setupTitle">
+  <div class="sheet-head"><h2 id="setupTitle">Teach it your pen</h2><button class="icon-btn" data-close aria-label="Close">✕</button></div>
+  <div class="sheet-body" id="setupBody"></div>
+</dialog>
+
+<script src="decoder.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

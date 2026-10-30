@@ -1,0 +1,22 @@
+{
+  "name": "Pen Click Morse",
+  "short_name": "Pen Morse",
+  "description": "Send Morse code by clicking a pen. Your phone listens and turns the clicks into text.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f2f4f8",
+  "theme_color": "#1f5fd1",
+  "categories": ["utilities", "education", "entertainment"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "store/screenshot-decode.png", "sizes": "1080x1920", "type": "image/png", "form_factor": "narrow", "label": "Decoding SOS from pen clicks" },
+    { "src": "store/screenshot-practice.png", "sizes": "1080x1920", "type": "image/png", "form_factor": "narrow", "label": "Practice mode" }
+  ]
+}
