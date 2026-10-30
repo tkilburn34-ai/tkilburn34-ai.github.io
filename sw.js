@@ -1,6 +1,6 @@
 // Pen Click Morse — offline support.
 // Bump VERSION whenever you change any app file so phones pick up the update.
-const VERSION = "pcm-v1";
+const VERSION = "pcm-v2";
 const SHELL = [
   "./", "index.html", "styles.css", "app.js", "decoder.js", "click-worklet.js",
   "manifest.webmanifest", "privacy.html", "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png",
