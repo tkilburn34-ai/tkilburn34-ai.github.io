@@ -1,1 +1,13 @@
 
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.tkilburn34ai.penclickmorse",
+      "sha256_cert_fingerprints": [
+        "14:93:D5:1A:D4:AD:27:B7:FB:AA:8F:7B:C2:FF:6F:54:6E:0B:2D:B6:E7:DE:53:F8:8D:1F:01:9D:17:AE:BB:1D"
+      ]
+    }
+  }
+]
