@@ -119,7 +119,16 @@ any file**, so phones download the new version.
 ## Updating the app later
 
 Most changes need **no new Play Store upload**. The Android app loads the website,
-so editing the files on GitHub updates everyone (remember to bump `VERSION` in `sw.js`).
+so editing the files on GitHub updates everyone.
+
+Whenever you change an app file, raise the version number in two places so every
+phone switches to the new files together:
+- `index.html`: the `?v=5` on the `styles.css`, `decoder.js` and `app.js` lines (make them all `?v=6`)
+- `sw.js`: `V = "?v=5"` → `"?v=6"` and `VERSION = "pcm-v5"` → `"pcm-v6"`
+
+The company page lives at `sixsided/` (https://YOURUSERNAME.github.io/sixsided/).
+Don't add a custom domain to this repository: it would change the app's address
+and break the Android app. Put a company domain on a separate repository instead.
 You only need a new `.aab` from PWABuilder if you change the app's name, icon or
 package details. Use the **same signing key** you backed up.
 

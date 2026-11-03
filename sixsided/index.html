@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SixSided Labs</title>
+<meta name="description" content="SixSided Labs LLC makes small, private apps for Android and the web, including Pen Click Morse.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<style>
+  /* Layout: one centred column. A die-face mark (six pips) is the company's sign;
+     the product card borrows Pen Click Morse's own blue. */
+  @font-face { font-family: "Bricolage Grotesque"; font-weight: 700; font-display: swap; src: url("../fonts/bricolage-grotesque-latin-700-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Instrument Sans"; font-weight: 400; font-display: swap; src: url("../fonts/instrument-sans-latin-400-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Instrument Sans"; font-weight: 600; font-display: swap; src: url("../fonts/instrument-sans-latin-600-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Chivo Mono"; font-weight: 400; font-display: swap; src: url("../fonts/chivo-mono-latin-400-normal.woff2") format("woff2"); }
+
+  :root {
+    --bg: #f4f3ef; --panel: #ffffff; --ink: #1a1d24; --muted: #5f6470; --line: #dcdad3;
+    --pip: #1a1d24; --die: #ffffff; --accent: #1f5fd1; --accent-ink: #ffffff;
+    --display: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+    --body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: "Chivo Mono", ui-monospace, Menlo, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121418; --panel: #1b1e24; --ink: #ecedf0; --muted: #9aa0ab; --line: #2d313a;
+      --pip: #121418; --die: #ecedf0; --accent: #6f9df1; --accent-ink: #0b1220; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121418; --panel: #1b1e24; --ink: #ecedf0; --muted: #9aa0ab; --line: #2d313a;
+    --pip: #121418; --die: #ecedf0; --accent: #6f9df1; --accent-ink: #0b1220; color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 var(--body); }
+  .wrap { max-width: 760px; margin: 0 auto;
+    padding: max(28px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(48px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+    display: grid; gap: 56px; }
+
+  header { display: flex; align-items: center; gap: 12px; }
+  .die { width: 40px; height: 40px; flex: none; }
+  .die rect { fill: var(--die); stroke: var(--ink); stroke-width: 6; }
+  .die circle { fill: var(--pip); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .die rect { stroke: var(--die); } }
+  :root[data-theme="dark"] .die rect { stroke: var(--die); }
+  .wordmark { font: 700 22px/1 var(--display); letter-spacing: -0.01em; }
+
+  .intro h1 { font: 700 clamp(34px, 7vw, 52px)/1.05 var(--display); letter-spacing: -0.02em; margin: 0 0 16px; text-wrap: balance; max-width: 18ch; }
+  .intro p { margin: 0; color: var(--muted); max-width: 56ch; font-size: 18px; }
+
+  h2 { font: 600 13px var(--body); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 0 0 14px; }
+
+  .product { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px;
+    display: grid; grid-template-columns: 72px 1fr; gap: 18px; align-items: start; }
+  .product img { width: 72px; height: 72px; border-radius: 16px; }
+  .product h3 { font: 700 24px/1.15 var(--display); margin: 2px 0 6px; }
+  .product p { margin: 0 0 14px; color: var(--muted); }
+  .code { display: flex; align-items: center; gap: 5px; margin-bottom: 14px; }
+  .code i { display: block; height: 8px; border-radius: 4px; background: var(--accent); }
+  .code .d { width: 8px; } .code .h { width: 22px; } .code .gap { width: 10px; background: none; }
+  .links { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; padding: 10px 16px; border-radius: 10px; font: 600 15px var(--body);
+    text-decoration: none; border: 1px solid var(--line); color: var(--ink); background: var(--panel); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn.soon { color: var(--muted); border-style: dashed; cursor: default; }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (max-width: 480px) { .product { grid-template-columns: 1fr; } }
+
+  .points { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .points li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; }
+  .points svg { width: 22px; height: 22px; margin-top: 3px; }
+  .points svg rect { fill: none; stroke: var(--ink); stroke-width: 7; }
+  .points svg circle { fill: var(--ink); }
+  .points b { display: block; }
+  .points span { color: var(--muted); }
+
+  .contact dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; }
+  .contact dt { color: var(--muted); }
+  .contact dd { margin: 0; }
+  .contact a { color: var(--accent); }
+
+  footer { border-top: 1px solid var(--line); padding-top: 18px; color: var(--muted); font-size: 14px; display: flex; gap: 16px; flex-wrap: wrap; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg class="die" viewBox="0 0 100 100" aria-hidden="true">
+      <rect x="5" y="5" width="90" height="90" rx="20"/>
+      <circle cx="31" cy="28" r="8"/><circle cx="31" cy="50" r="8"/><circle cx="31" cy="72" r="8"/>
+      <circle cx="69" cy="28" r="8"/><circle cx="69" cy="50" r="8"/><circle cx="69" cy="72" r="8"/>
+    </svg>
+    <span class="wordmark">SixSided Labs</span>
+  </header>
+
+  <section class="intro">
+    <h1>Small apps for the things you do with your hands.</h1>
+    <p>SixSided Labs LLC builds focused, private apps for Android and the web. Each one does a single job, works on your device, and doesn't ask for an account.</p>
+  </section>
+
+  <section>
+    <h2>Our apps</h2>
+    <article class="product">
+      <img src="../icons/icon-192.png" alt="Pen Click Morse icon" width="72" height="72">
+      <div>
+        <h3>Pen Click Morse</h3>
+        <div class="code" aria-label="P E N in Morse code"><i class="d"></i><i class="h"></i><i class="h"></i><i class="d"></i><i class="gap"></i><i class="d"></i><i class="gap"></i><i class="h"></i><i class="d"></i></div>
+        <p>Send Morse code by clicking a pen. Your phone listens and turns the clicks into text. Send secret messages to friends, or practice until you can do it without looking.</p>
+        <div class="links">
+          <a class="btn primary" href="../">Open the web app</a>
+          <span class="btn soon" title="Coming soon">Google Play: coming soon</span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <h2>How we build</h2>
+    <ul class="points">
+      <li>
+        <svg viewBox="0 0 100 100" aria-hidden="true"><rect x="6" y="6" width="88" height="88" rx="22"/><circle cx="50" cy="50" r="11"/></svg>
+        <div><b>One job each</b><span>An app should be quick to learn and hard to outgrow.</span></div>
+      </li>
+      <li>
+        <svg viewBox="0 0 100 100" aria-hidden="true"><rect x="6" y="6" width="88" height="88" rx="22"/><circle cx="30" cy="30" r="11"/><circle cx="70" cy="70" r="11"/></svg>
+        <div><b>Private by design</b><span>Our apps work on your device. No accounts, no ads, no tracking.</span></div>
+      </li>
+      <li>
+        <svg viewBox="0 0 100 100" aria-hidden="true"><rect x="6" y="6" width="88" height="88" rx="22"/><circle cx="28" cy="28" r="11"/><circle cx="50" cy="50" r="11"/><circle cx="72" cy="72" r="11"/></svg>
+        <div><b>Works offline</b><span>Once installed, they keep working without a connection.</span></div>
+      </li>
+    </ul>
+  </section>
+
+  <section class="contact">
+    <h2>Contact</h2>
+    <dl>
+      <dt>Company</dt><dd>SixSided Labs LLC</dd>
+      <dt>Email</dt><dd><a href="mailto:tkilburn34@gmail.com">tkilburn34@gmail.com</a></dd>
+      <!-- Optional: add your business mailing address, matching your state registration exactly:
+      <dt>Address</dt><dd>123 Example St, City, State ZIP</dd> -->
+    </dl>
+  </section>
+
+  <footer>
+    <span>© 2026 SixSided Labs LLC</span>
+    <a href="../privacy.html">Pen Click Morse privacy policy</a>
+  </footer>
+</div>
+</body>
+</html>

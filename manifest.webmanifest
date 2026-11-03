@@ -17,6 +17,8 @@
   ],
   "screenshots": [
     { "src": "store/screenshot-decode.png", "sizes": "1080x1920", "type": "image/png", "form_factor": "narrow", "label": "Decoding SOS from pen clicks" },
+    { "src": "store/screenshot-send.png", "sizes": "1080x1920", "type": "image/png", "form_factor": "narrow", "label": "Send a Morse message to a contact" },
+    { "src": "store/screenshot-received.png", "sizes": "1080x1920", "type": "image/png", "form_factor": "narrow", "label": "A Morse message from a friend" },
     { "src": "store/screenshot-practice.png", "sizes": "1080x1920", "type": "image/png", "form_factor": "narrow", "label": "Practice mode" }
   ]
 }

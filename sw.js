@@ -1,8 +1,11 @@
 // Pen Click Morse — offline support.
-// Bump VERSION whenever you change any app file so phones pick up the update.
-const VERSION = "pcm-v4";
+//
+// Updating the app: raise V (and VERSION) here AND the ?v= number in index.html,
+// so every phone switches to the new files together.
+const V = "?v=5";
+const VERSION = "pcm-v5";
 const SHELL = [
-  "./", "index.html", "styles.css", "app.js", "decoder.js", "click-worklet.js",
+  "./", "index.html", "styles.css" + V, "decoder.js" + V, "app.js" + V, "click-worklet.js" + V,
   "manifest.webmanifest", "privacy.html", "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png",
   "fonts/bricolage-grotesque-latin-700-normal.woff2", "fonts/instrument-sans-latin-400-normal.woff2",
   "fonts/instrument-sans-latin-500-normal.woff2", "fonts/instrument-sans-latin-600-normal.woff2",
@@ -21,20 +24,25 @@ self.addEventListener("activate", (e) => {
   );
 });
 
+// Online: always fetch fresh (the page itself skips the browser cache), and keep a copy.
+// Offline: serve the saved copy.
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
-  // Serve from cache straight away, refresh in the background.
-  e.respondWith(
-    caches.open(VERSION).then(async (cache) => {
-      const hit = await cache.match(req, { ignoreSearch: url.origin === location.origin });
-      const fresh = fetch(req).then((res) => {
-        if (res && res.ok) cache.put(req, res.clone());
-        return res;
-      }).catch(() => hit);
-      return hit || fresh;
-    })
-  );
+  e.respondWith((async () => {
+    const cache = await caches.open(VERSION);
+    try {
+      const res = req.mode === "navigate"
+        ? await fetch(url.href, { cache: "no-cache", credentials: "same-origin" })
+        : await fetch(req);
+      if (res.ok) cache.put(req, res.clone());
+      return res;
+    } catch {
+      return (await cache.match(req)) ||
+        (await cache.match(req, { ignoreSearch: true })) ||
+        (req.mode === "navigate" ? await cache.match("index.html") : Response.error());
+    }
+  })());
 });

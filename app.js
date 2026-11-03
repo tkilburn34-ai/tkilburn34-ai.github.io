@@ -11,6 +11,10 @@ const CONFIG = {
   WEB_LETTER_LIMIT: 30,
 };
 
+// The ?v= number on this script's tag in index.html. Every file is loaded with it,
+// so a phone can never run a mix of old and new files after an update.
+const APP_VERSION = (() => { try { return new URL(document.currentScript.src).searchParams.get("v") || "dev"; } catch { return "dev"; } })();
+
 const $ = (id) => document.getElementById(id);
 const store = {
   get(k, d) { try { const v = localStorage.getItem("pcm:" + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
@@ -83,7 +87,7 @@ async function startMic() {
       audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
     });
     ac = new AudioContext();
-    await ac.audioWorklet.addModule("click-worklet.js");
+    await ac.audioWorklet.addModule("click-worklet.js?v=" + APP_VERSION);
     node = new AudioWorkletNode(ac, "click-processor");
     node.port.onmessage = onAudioMessage;
     node.port.postMessage({ type: "set", params: detectorParams() });
@@ -679,4 +683,4 @@ applySettings();
 render();
 requestAnimationFrame(tick);
 if (!checkSharedLink() && !store.get("setupSeen", false)) setup.open();
-if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) navigator.serviceWorker.register("sw.js").catch(() => {});
