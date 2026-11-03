@@ -24,7 +24,8 @@ IGNORES WHAT ISN'T A CLICK
 The detector checks every sound for the sharp, short snap of a pen. Talking, music, table knocks and bumps are filtered out, so you can use it in a normal room.
 
 SEND TO A FRIEND
-Type a message and your phone plays it as pen clicks. Hold it next to a friend's phone running Pen Click Morse and the message appears on their screen. Add vibration or screen flashes to feel or see the code as it plays.
+Type a message and send it to anyone in your contacts by text, WhatsApp or email. They get a link that shows your message as dots and dashes. They can play it as clicks, feel it as vibrations, try to crack it, then reveal it and reply in Morse.
+Sitting together? Play your message out loud as pen clicks and their phone decodes it.
 
 PRACTICE MODE
 Learn Morse code with your pen. The app shows a letter and you send it. Hide the pattern once you know it and build a streak.

@@ -137,7 +137,29 @@
     return { clicks, letters, skipped, duration, timing: { pairGap, symGap, letterPause, wordPause } };
   }
 
-  const api = { MorseDecoder, MORSE, ENCODE, clickSchedule };
+  /**
+   * Messages shared as links carry the text in the link's #msg= part, so it
+   * never passes through a server. Only Morse-able characters are kept.
+   */
+  function cleanMessage(text) {
+    return String(text).toUpperCase().split(/\s+/)
+      .map((w) => [...w].filter((c) => ENCODE[c]).join("")).filter(Boolean).join(" ").slice(0, 80);
+  }
+  function encodeShare(text) {
+    const bytes = new TextEncoder().encode(cleanMessage(text));
+    let bin = ""; bytes.forEach((b) => (bin += String.fromCharCode(b)));
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function decodeShare(token) {
+    try {
+      const b64 = String(token).replace(/-/g, "+").replace(/_/g, "/");
+      const bin = atob(b64 + "===".slice((b64.length + 3) % 4));
+      const text = new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+      return cleanMessage(text) || null;
+    } catch { return null; }
+  }
+
+  const api = { MorseDecoder, MORSE, ENCODE, clickSchedule, cleanMessage, encodeShare, decodeShare };
   if (typeof module !== "undefined") module.exports = api;
   else Object.assign(root, api);
 })(this);

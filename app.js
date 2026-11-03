@@ -291,6 +291,7 @@ function setMode(m) {
   if (mode === "send" && sending) stopSending();
   if (m === "practice") { savedText = decoder.text; decoder.text = ""; nextTarget(); }
   mode = m;
+  document.querySelector(".app").classList.toggle("mode-send", m === "send");
   for (const v of ["decode", "send", "practice"]) {
     $("tab-" + v).setAttribute("aria-selected", String(m === v));
     $("view-" + v).hidden = m !== v;
@@ -386,18 +387,19 @@ function flashScreen() {
   setTimeout(() => ($("flashOverlay").hidden = true), 70);
 }
 
-async function playMessage() {
-  const sch = clickSchedule($("sendText").value, SEND_TIMING);
-  if (!sch.clicks.length) { flashStatus("Type a message first"); $("sendText").focus(); return; }
-  if (!sendOpts.sound && !sendOpts.vibrate && !sendOpts.flash) { flashStatus("Choose Clicks, Vibrate or Flash"); return; }
-  $("sendText").blur();
-  sending = true;
-  $("btnPlay").textContent = "Stop";
-  $("btnPlay").classList.add("playing");
+// Play a message as clicks / vibration / flashes. `ui` = { button, idleLabel, codeEl, doneMsg }
+let playUI = null;
+async function playClicks(text, opts, ui) {
+  const sch = clickSchedule(text, SEND_TIMING);
+  if (!sch.clicks.length) return false;
+  if (sending) stopSending();
+  sending = true; playUI = ui;
+  ui.button.textContent = "Stop";
+  ui.button.classList.add("playing");
   const lead = 300;
   const t0 = performance.now() + lead;
   ignoreMicUntil = t0 + sch.duration;
-  if (sendOpts.sound) {
+  if (opts.sound) {
     try {
       sendCtx = new AudioContext();
       await sendCtx.resume();
@@ -413,15 +415,16 @@ async function playMessage() {
   for (const c of sch.clicks) {
     at(c.t, () => {
       marks.push({ t: performance.now(), kind: c.kind });
-      if (sendOpts.vibrate && navigator.vibrate) navigator.vibrate(35);
-      if (sendOpts.flash) flashScreen();
+      if (opts.vibrate && navigator.vibrate) navigator.vibrate(35);
+      if (opts.flash) flashScreen();
     });
   }
-  const els = [...document.querySelectorAll("#sendCode .sc-letter")];
+  const els = ui.codeEl ? [...ui.codeEl.querySelectorAll(".sc-letter")] : [];
   sch.letters.forEach((l, i) => at(l.start, () => {
     els.forEach((e, j) => { e.classList.toggle("on", j === i); e.classList.toggle("done", j < i); });
   }));
-  at(sch.clicks[sch.clicks.length - 1].t + 400, () => { stopSending(); flashStatus("Message sent"); });
+  at(sch.clicks[sch.clicks.length - 1].t + 400, () => { stopSending(); if (ui.doneMsg) flashStatus(ui.doneMsg); });
+  return true;
 }
 
 function stopSending() {
@@ -431,11 +434,86 @@ function stopSending() {
   $("flashOverlay").hidden = true;
   sending = false;
   ignoreMicUntil = performance.now() + 300;
-  $("btnPlay").textContent = "Play message";
-  $("btnPlay").classList.remove("playing");
-  document.querySelectorAll("#sendCode .sc-letter").forEach((e) => e.classList.remove("on", "done"));
+  if (playUI) {
+    playUI.button.textContent = playUI.idleLabel;
+    playUI.button.classList.remove("playing");
+    playUI.codeEl?.querySelectorAll(".sc-letter").forEach((e) => e.classList.remove("on", "done"));
+    playUI = null;
+  }
 }
-$("btnPlay").addEventListener("click", () => (sending ? stopSending() : playMessage()));
+
+$("btnPlay").addEventListener("click", async () => {
+  if (sending) { stopSending(); return; }
+  if (!sendOpts.sound && !sendOpts.vibrate && !sendOpts.flash) { flashStatus("Choose Clicks, Vibrate or Flash"); return; }
+  $("sendText").blur();
+  const ok = await playClicks($("sendText").value, sendOpts,
+    { button: $("btnPlay"), idleLabel: "Play out loud", codeEl: $("sendCode"), doneMsg: "Message played" });
+  if (!ok) { flashStatus("Type a message first"); $("sendText").focus(); }
+});
+
+// ---------------------------------------------------------------------------
+// Send to a contact: share a link that carries the message
+// ---------------------------------------------------------------------------
+function shareLink(text) {
+  return location.origin + location.pathname.replace(/index\.html$/, "") + "#msg=" + encodeShare(text);
+}
+$("btnShareMsg").addEventListener("click", async () => {
+  const text = cleanMessage($("sendText").value);
+  if (!text) { flashStatus("Type a message first"); $("sendText").focus(); return; }
+  const url = shareLink(text);
+  const blurb = "I sent you a secret message in Morse code. Tap to hear it and decode it:";
+  if (navigator.share) {
+    try { await navigator.share({ title: "A Morse message for you", text: blurb, url }); flashStatus("Message link sent"); return; }
+    catch (err) { if (err && err.name === "AbortError") return; }
+  }
+  // No share menu (some desktop browsers): copy the link instead.
+  try { await navigator.clipboard.writeText(`${blurb} ${url}`); flashStatus("Link copied. Paste it into a text or email."); }
+  catch { $("shareHint").textContent = url; flashStatus("Copy this link and send it"); }
+});
+
+// ---------------------------------------------------------------------------
+// Opening a shared link: "You got a Morse message"
+// ---------------------------------------------------------------------------
+let received = null;
+function codeChipsHTML(text, showLetters) {
+  return text.split(" ").map((w) => [...w].map((ch, i) =>
+    `<span class="sc-letter"><b>${showLetters ? ch : ""}</b>${marksHTML(ENCODE[ch])}</span>`).join("")).join(`<span class="sc-word"></span>`);
+}
+function openReceived(text) {
+  received = text;
+  $("recvCode").innerHTML = codeChipsHTML(text, false);
+  $("recvText").hidden = true;
+  $("recvText").textContent = text;
+  $("recvReveal").hidden = false;
+  $("received").showModal();
+}
+function checkSharedLink() {
+  const m = location.hash.match(/^#msg=([A-Za-z0-9_-]+)/);
+  if (!m) return false;
+  history.replaceState(null, "", location.pathname + location.search);
+  const text = decodeShare(m[1]);
+  if (!text) { flashStatus("That message link is damaged"); return false; }
+  openReceived(text);
+  return true;
+}
+window.addEventListener("hashchange", checkSharedLink);
+$("recvPlay").addEventListener("click", () => sending ? stopSending()
+  : playClicks(received, { sound: true }, { button: $("recvPlay"), idleLabel: "Play clicks", codeEl: $("recvCode") }));
+$("recvVibrate").addEventListener("click", () => sending ? stopSending()
+  : playClicks(received, { vibrate: true }, { button: $("recvVibrate"), idleLabel: "Vibrate it", codeEl: $("recvCode") }));
+if (!navigator.vibrate) $("recvVibrate").hidden = true;
+$("recvReveal").addEventListener("click", () => {
+  $("recvCode").innerHTML = codeChipsHTML(received, true);
+  $("recvText").hidden = false;
+  $("recvReveal").hidden = true;
+});
+$("recvReply").addEventListener("click", () => {
+  $("received").close();
+  setMode("send");
+  $("sendText").value = ""; renderSendCode();
+  $("sendText").focus();
+});
+$("received").addEventListener("close", () => { if (sending) stopSending(); });
 
 // ---------------------------------------------------------------------------
 // Dialogs
@@ -600,5 +678,5 @@ syncSettingsUI();
 applySettings();
 render();
 requestAnimationFrame(tick);
-if (!store.get("setupSeen", false)) setup.open();
+if (!checkSharedLink() && !store.get("setupSeen", false)) setup.open();
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});

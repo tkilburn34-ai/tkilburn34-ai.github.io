@@ -42,12 +42,19 @@
       <label class="eyebrow" for="sendText">Message to send</label>
       <textarea id="sendText" rows="2" maxlength="80" placeholder="Type a message, like MEET AT 3" autocapitalize="characters" autocomplete="off" spellcheck="false"></textarea>
       <div class="send-code" id="sendCode" aria-hidden="true"></div>
-      <div class="send-opts" role="group" aria-label="Play as">
+      
+      <button class="btn primary wide" id="btnShareMsg">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>
+        Send to a contact
+      </button>
+      <p class="hint" id="shareHint">Pick someone from your contacts in Messages, WhatsApp, email or any app. They get a link that plays your message in Morse.</p>
+      <div class="or-line"><span>or, for a phone right next to you</span></div>
+      <div class="send-opts" role="group" aria-label="Play out loud as">
         <label class="chip"><input type="checkbox" id="optSound"><span>Clicks</span></label>
         <label class="chip"><input type="checkbox" id="optVibrate"><span>Vibrate</span></label>
         <label class="chip"><input type="checkbox" id="optFlash"><span>Flash</span></label>
       </div>
-      <button class="btn primary wide" id="btnPlay">Play message</button>
+      <button class="btn wide" id="btnPlay">Play out loud</button>
       <p class="hint" id="sendHint">Hold this phone next to the other phone, with your volume up. The other phone should be on Decode and listening.</p>
     </section>
 
@@ -87,6 +94,22 @@
   <p><b>That's the end of the free web demo.</b> Get the Android app to keep decoding with no limits.</p>
   <a class="btn primary" id="playLink" href="#" target="_blank" rel="noopener">Get it on Google Play</a>
 </div>
+
+<!-- A message someone shared with you -->
+<dialog id="received" class="sheet" aria-labelledby="recvTitle">
+  <div class="sheet-head"><h2 id="recvTitle">You got a Morse message</h2><button class="icon-btn" data-close aria-label="Close">✕</button></div>
+  <div class="sheet-body">
+    <p>Someone sent you a message in pen-click Morse. Listen to it, feel it, or work out the code before you reveal it.</p>
+    <div class="recv-code" id="recvCode" aria-label="The message in Morse code"></div>
+    <div class="row">
+      <button class="btn" id="recvPlay">Play clicks</button>
+      <button class="btn" id="recvVibrate">Vibrate it</button>
+    </div>
+    <div class="recv-text" id="recvText" hidden></div>
+    <button class="btn primary wide" id="recvReveal">Reveal message</button>
+    <button class="btn wide" id="recvReply">Reply in Morse</button>
+  </div>
+</dialog>
 
 <!-- Settings -->
 <dialog id="settings" class="sheet" aria-labelledby="settingsTitle">
