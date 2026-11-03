@@ -18,6 +18,7 @@
     <div class="brand"><img src="icons/icon.svg" alt="" width="28" height="28"><span>Pen Click <b>Morse</b></span></div>
     <div class="tabs" role="tablist" aria-label="Mode">
       <button role="tab" id="tab-decode" aria-selected="true" aria-controls="view-decode">Decode</button>
+      <button role="tab" id="tab-send" aria-selected="false" aria-controls="view-send">Send</button>
       <button role="tab" id="tab-practice" aria-selected="false" aria-controls="view-practice">Practice</button>
     </div>
     <button class="icon-btn" id="openSettings" aria-label="Settings">
@@ -35,6 +36,19 @@
         <button id="btnShare" hidden>Share</button>
         <button id="btnClear">Clear</button>
       </div>
+    </section>
+
+    <section id="view-send" class="card send" role="tabpanel" aria-labelledby="tab-send" hidden>
+      <label class="eyebrow" for="sendText">Message to send</label>
+      <textarea id="sendText" rows="2" maxlength="80" placeholder="Type a message, like MEET AT 3" autocapitalize="characters" autocomplete="off" spellcheck="false"></textarea>
+      <div class="send-code" id="sendCode" aria-hidden="true"></div>
+      <div class="send-opts" role="group" aria-label="Play as">
+        <label class="chip"><input type="checkbox" id="optSound"><span>Clicks</span></label>
+        <label class="chip"><input type="checkbox" id="optVibrate"><span>Vibrate</span></label>
+        <label class="chip"><input type="checkbox" id="optFlash"><span>Flash</span></label>
+      </div>
+      <button class="btn primary wide" id="btnPlay">Play message</button>
+      <p class="hint" id="sendHint">Hold this phone next to the other phone, with your volume up. The other phone should be on Decode and listening.</p>
     </section>
 
     <section id="view-practice" class="card practice" role="tabpanel" aria-labelledby="tab-practice" hidden>
@@ -66,6 +80,8 @@
     </button>
   </footer>
 </div>
+
+<div class="flash-overlay" id="flashOverlay" hidden></div>
 
 <div class="limit" id="limitBanner" hidden>
   <p><b>That's the end of the free web demo.</b> Get the Android app to keep decoding with no limits.</p>

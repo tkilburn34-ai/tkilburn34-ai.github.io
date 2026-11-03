@@ -23,6 +23,9 @@ Every pen sounds different. Click yours a few times and the app tunes itself to 
 IGNORES WHAT ISN'T A CLICK
 The detector checks every sound for the sharp, short snap of a pen. Talking, music, table knocks and bumps are filtered out, so you can use it in a normal room.
 
+SEND TO A FRIEND
+Type a message and your phone plays it as pen clicks. Hold it next to a friend's phone running Pen Click Morse and the message appears on their screen. Add vibration or screen flashes to feel or see the code as it plays.
+
 PRACTICE MODE
 Learn Morse code with your pen. The app shows a letter and you send it. Hide the pattern once you know it and build a streak.
 
@@ -38,7 +41,7 @@ ALSO INCLUDED
 PRIVATE BY DESIGN
 Sound is analysed on your phone and never recorded, stored or sent anywhere. No account, no ads, no tracking.
 
-Great for passing secret notes, learning Morse code, escape-room puzzles, scouts, ham radio beginners, and anyone who can't stop clicking their pen.
+Great for passing secret notes between two phones, learning Morse code, escape-room puzzles, scouts, ham radio beginners, and anyone who can't stop clicking their pen.
 
 ## Category
 Tools (or Education)

@@ -3,7 +3,7 @@
 // noise), runs it through the real detector + decoder, and checks the text.
 const assert = require("assert");
 const { ClickDetector } = require("../click-worklet.js");
-const { MorseDecoder } = require("../decoder.js");
+const { MorseDecoder, clickSchedule } = require("../decoder.js");
 
 const SR = 48000;
 let seed = 12345;
@@ -144,6 +144,36 @@ test("unknown patterns are reported, not typed", () => {
   const evs = d.tick(6000);
   assert(evs.some((e) => e.type === "unknown"));
   assert.strictEqual(d.text, "");
+});
+
+// ---- Send mode: a phone playing clicks, another phone decoding them --------
+// The sender always uses SEND_TIMING; receivers may be tuned differently.
+const SEND_TIMING = { dashWin: 300, letterGap: 1250, wordGap: 2800, refractoryMs: 90 };
+function playTo(msg, receiver, { echoAmp = 0 } = {}) {
+  const sch = clickSchedule(msg, SEND_TIMING);
+  const b = scene(sch.duration + 4000); addNoise(b, 0.002);
+  for (const c of sch.clicks) { addClick(b, 300 + c.t, 0.25); if (echoAmp) addClick(b, 300 + c.t + 12, echoAmp); }
+  return run(b, { refractoryMs: receiver.refractoryMs }, receiver).text;
+}
+const RECEIVERS = {
+  "default settings": { dashWin: 300, letterGap: 1000, wordGap: 2800, refractoryMs: 90 },
+  "fast double-clicker with a long echo filter": { dashWin: 210, letterGap: 1000, wordGap: 2800, refractoryMs: 145 },
+  "slow double-clicker": { dashWin: 420, letterGap: 1450, wordGap: 3200, refractoryMs: 120 },
+};
+for (const [name, rx] of Object.entries(RECEIVERS)) {
+  test(`send mode: decodes on a receiver with ${name}`, () => {
+    assert.strictEqual(playTo("SOS HELP 73", rx), "SOS HELP 73");
+  });
+}
+
+test("send mode: room echo from the speaker is ignored", () => {
+  assert.strictEqual(playTo("PEN", RECEIVERS["default settings"], { echoAmp: 0.1 }), "PEN");
+});
+
+test("send mode: unsupported characters are skipped and reported", () => {
+  const sch = clickSchedule("hi ✓ #1", SEND_TIMING);
+  assert.deepStrictEqual(sch.letters.map((l) => l.ch).join(""), "HI1");
+  assert.deepStrictEqual(sch.skipped, ["✓", "#"]);
 });
 
 let failed = 0;

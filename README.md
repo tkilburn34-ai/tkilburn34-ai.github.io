@@ -5,6 +5,7 @@ Send Morse code by clicking a pen. Your phone listens and turns the clicks into 
 - **One click** → dot
 - **Two quick clicks** → dash
 - **Short pause** → next letter · **long pause** → space · **six clicks** → erase the last letter
+- **Send tab** → type a message and the phone plays it as clicks for another phone to decode
 
 It runs entirely on the phone. No accounts, no tracking, no audio leaves the device.
 

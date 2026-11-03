@@ -136,6 +136,7 @@ function onAudioMessage({ data: d }) {
   }
   const t = toPageTime(d.t);
   if (setup.active) { setup.onEvent(d, t); return; }
+  if (performance.now() < ignoreMicUntil) return; // don't decode our own Send playback
   if (d.type === "click") registerClick(t);
   else {
     marks.push({ t, kind: "reject" });
@@ -198,7 +199,7 @@ $("pad").addEventListener("pointerdown", (e) => { e.preventDefault(); padClick()
 $("pad").addEventListener("click", (e) => e.preventDefault());
 document.addEventListener("keydown", (e) => {
   if (e.code !== "Space" || e.repeat || document.querySelector("dialog[open]")) return;
-  if (["INPUT", "BUTTON", "A"].includes(document.activeElement?.tagName) && document.activeElement !== $("pad")) return;
+  if (["INPUT", "TEXTAREA", "BUTTON", "A"].includes(document.activeElement?.tagName) && document.activeElement !== $("pad")) return;
   e.preventDefault(); padClick();
 });
 
@@ -286,17 +287,17 @@ const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 function setMode(m) {
   if (m === mode) return;
-  if (m === "practice") { savedText = decoder.text; nextTarget(); }
-  else decoder.text = savedText;
+  if (mode === "practice") decoder.text = savedText;
+  if (mode === "send" && sending) stopSending();
+  if (m === "practice") { savedText = decoder.text; decoder.text = ""; nextTarget(); }
   mode = m;
-  $("tab-decode").setAttribute("aria-selected", String(m === "decode"));
-  $("tab-practice").setAttribute("aria-selected", String(m === "practice"));
-  $("view-decode").hidden = m !== "decode";
-  $("view-practice").hidden = m !== "practice";
+  for (const v of ["decode", "send", "practice"]) {
+    $("tab-" + v).setAttribute("aria-selected", String(m === v));
+    $("view-" + v).hidden = m !== v;
+  }
   render();
 }
-$("tab-decode").addEventListener("click", () => setMode("decode"));
-$("tab-practice").addEventListener("click", () => setMode("practice"));
+for (const v of ["decode", "send", "practice"]) $("tab-" + v).addEventListener("click", () => setMode(v));
 
 function nextTarget() {
   let n; do { n = LETTERS[Math.floor(Math.random() * LETTERS.length)]; } while (n === target);
@@ -328,6 +329,113 @@ $("btnHint").addEventListener("click", () => {
 });
 $("btnSkip").addEventListener("click", () => { streak = 0; $("streak").textContent = 0; nextTarget(); });
 $("btnHint").textContent = showCode ? "Hide pattern" : "Show pattern";
+
+// ---------------------------------------------------------------------------
+// Send mode: play a typed message as pen clicks for another phone to decode
+// ---------------------------------------------------------------------------
+// One standard timing that sits inside what any normally tuned receiver accepts
+// (tested against fast, default and slow receivers in tests/detector.test.js).
+const SEND_TIMING = { dashWin: 300, letterGap: 1250, wordGap: 2800, refractoryMs: 90 };
+let sending = false, sendCtx = null, sendTimers = [], ignoreMicUntil = 0, clickBuffer = null;
+const sendOpts = Object.assign({ sound: true, vibrate: false, flash: false }, store.get("sendOpts", {}));
+$("optSound").checked = sendOpts.sound;
+$("optVibrate").checked = sendOpts.vibrate;
+$("optFlash").checked = sendOpts.flash;
+for (const [id, key] of [["optSound", "sound"], ["optVibrate", "vibrate"], ["optFlash", "flash"]]) {
+  $(id).addEventListener("change", () => { sendOpts[key] = $(id).checked; store.set("sendOpts", sendOpts); });
+}
+if (!navigator.vibrate) $("optVibrate").closest(".chip").hidden = true;
+
+function renderSendCode() {
+  const sch = clickSchedule($("sendText").value, SEND_TIMING);
+  const words = $("sendText").value.toUpperCase().trim().split(/\s+/).filter(Boolean);
+  let html = "", i = 0;
+  words.forEach((w, wi) => {
+    if (wi > 0 && i > 0) html += `<span class="sc-word"></span>`;
+    for (const ch of w) {
+      if (!ENCODE[ch]) continue;
+      html += `<span class="sc-letter" data-i="${i++}"><b>${ch}</b>${marksHTML(ENCODE[ch])}</span>`;
+    }
+  });
+  $("sendCode").innerHTML = html;
+  const secs = Math.ceil(sch.duration / 1000);
+  $("sendHint").textContent = sch.skipped.length
+    ? `Can't send ${sch.skipped.join(" ")}. Use letters, numbers and . , ? ! / @ = + - ' :`
+    : sch.clicks.length
+      ? `About ${secs} seconds. Hold this phone next to the other phone, with your volume up. The other phone should be on Decode and listening.`
+      : "Hold this phone next to the other phone, with your volume up. The other phone should be on Decode and listening.";
+}
+$("sendText").addEventListener("input", () => { store.set("sendDraft", $("sendText").value); renderSendCode(); });
+$("sendText").value = store.get("sendDraft", "");
+renderSendCode();
+
+// A short, bright, broadband snap: the same kind of sound as a pen click.
+function makeClickBuffer(ctx) {
+  const sr = ctx.sampleRate, n = Math.round(sr * 0.025);
+  const buf = ctx.createBuffer(1, n, sr), d = buf.getChannelData(0);
+  let prev = 0;
+  for (let i = 0; i < n; i++) {
+    const r = Math.random() * 2 - 1, hf = r - prev; prev = r;
+    d[i] = clamp(0.55 * hf * Math.exp(-i / (sr * 0.0025)) + 0.35 * Math.sin((2 * Math.PI * 3500 * i) / sr) * Math.exp(-i / (sr * 0.002)), -1, 1);
+  }
+  return buf;
+}
+
+function flashScreen() {
+  $("flashOverlay").hidden = false;
+  setTimeout(() => ($("flashOverlay").hidden = true), 70);
+}
+
+async function playMessage() {
+  const sch = clickSchedule($("sendText").value, SEND_TIMING);
+  if (!sch.clicks.length) { flashStatus("Type a message first"); $("sendText").focus(); return; }
+  if (!sendOpts.sound && !sendOpts.vibrate && !sendOpts.flash) { flashStatus("Choose Clicks, Vibrate or Flash"); return; }
+  $("sendText").blur();
+  sending = true;
+  $("btnPlay").textContent = "Stop";
+  $("btnPlay").classList.add("playing");
+  const lead = 300;
+  const t0 = performance.now() + lead;
+  ignoreMicUntil = t0 + sch.duration;
+  if (sendOpts.sound) {
+    try {
+      sendCtx = new AudioContext();
+      await sendCtx.resume();
+      clickBuffer = clickBuffer && clickBuffer.sampleRate === sendCtx.sampleRate ? clickBuffer : makeClickBuffer(sendCtx);
+      const gain = sendCtx.createGain(); gain.gain.value = 0.9; gain.connect(sendCtx.destination);
+      const a0 = sendCtx.currentTime + lead / 1000;
+      for (const c of sch.clicks) {
+        const src = sendCtx.createBufferSource(); src.buffer = clickBuffer; src.connect(gain); src.start(a0 + c.t / 1000);
+      }
+    } catch { flashStatus("Couldn't play sound on this phone"); }
+  }
+  const at = (ms, fn) => sendTimers.push(setTimeout(fn, Math.max(0, t0 + ms - performance.now())));
+  for (const c of sch.clicks) {
+    at(c.t, () => {
+      marks.push({ t: performance.now(), kind: c.kind });
+      if (sendOpts.vibrate && navigator.vibrate) navigator.vibrate(35);
+      if (sendOpts.flash) flashScreen();
+    });
+  }
+  const els = [...document.querySelectorAll("#sendCode .sc-letter")];
+  sch.letters.forEach((l, i) => at(l.start, () => {
+    els.forEach((e, j) => { e.classList.toggle("on", j === i); e.classList.toggle("done", j < i); });
+  }));
+  at(sch.clicks[sch.clicks.length - 1].t + 400, () => { stopSending(); flashStatus("Message sent"); });
+}
+
+function stopSending() {
+  sendTimers.forEach(clearTimeout); sendTimers = [];
+  sendCtx?.close().catch(() => {}); sendCtx = null;
+  navigator.vibrate?.(0);
+  $("flashOverlay").hidden = true;
+  sending = false;
+  ignoreMicUntil = performance.now() + 300;
+  $("btnPlay").textContent = "Play message";
+  $("btnPlay").classList.remove("playing");
+  document.querySelectorAll("#sendCode .sc-letter").forEach((e) => e.classList.remove("on", "done"));
+}
+$("btnPlay").addEventListener("click", () => (sending ? stopSending() : playMessage()));
 
 // ---------------------------------------------------------------------------
 // Dialogs

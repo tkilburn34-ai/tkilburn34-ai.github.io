@@ -98,7 +98,46 @@
     }
   }
 
-  const api = { MorseDecoder, MORSE, ENCODE };
+  /**
+   * Plan a message as pen clicks, timed so a phone listening with settings `o`
+   * decodes it. Returns click times (ms from start) and the letters they spell.
+   *   o = { dashWin, letterGap, wordGap, refractoryMs }
+   */
+  function clickSchedule(text, o) {
+    const dashWin = o.dashWin, letterGap = Math.max(o.letterGap, dashWin + 250);
+    const wordGap = Math.max(o.wordGap, letterGap + 500), refr = o.refractoryMs || 90;
+    // Second click of a dash: after the echo filter, well inside the double-click window.
+    const lo = refr + 40, hi = dashWin - 50;
+    const pairGap = Math.round(lo <= hi ? (lo + hi) / 2 : (refr + dashWin) / 2);
+    const symGap = Math.round(Math.min(dashWin + 220, letterGap - 150));            // next symbol
+    const letterPause = Math.round(Math.min(letterGap + 350, (letterGap + wordGap) / 2)); // next letter
+    const wordPause = Math.round(wordGap + 600);                                     // next word
+
+    const clicks = [], letters = [], skipped = [];
+    let t = 0, last = null; // time of the previous click
+    const words = String(text).toUpperCase().trim().split(/\s+/).filter(Boolean);
+    words.forEach((word, wi) => {
+      let first = true;
+      for (const ch of word) {
+        const code = ENCODE[ch];
+        if (!code) { if (!skipped.includes(ch)) skipped.push(ch); continue; }
+        if (last !== null) t = last + (first && wi > 0 && letters.length ? wordPause : letterPause);
+        first = false;
+        const li = letters.length;
+        letters.push({ ch, code, start: t });
+        [...code].forEach((s, si) => {
+          if (si > 0) t = last + symGap;
+          clicks.push({ t, letter: li, kind: "click" });
+          last = t;
+          if (s === "-") { t += pairGap; clicks.push({ t, letter: li, kind: "dash" }); last = t; }
+        });
+      }
+    });
+    const duration = last === null ? 0 : last + letterGap + 200;
+    return { clicks, letters, skipped, duration, timing: { pairGap, symGap, letterPause, wordPause } };
+  }
+
+  const api = { MorseDecoder, MORSE, ENCODE, clickSchedule };
   if (typeof module !== "undefined") module.exports = api;
   else Object.assign(root, api);
 })(this);
