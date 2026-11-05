@@ -3,185 +3,146 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Pen Click Morse</title>
-<meta name="description" content="Send Morse code by clicking a pen. Your phone listens and turns the clicks into text.">
-<meta name="theme-color" content="#f2f4f8" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0e141b" media="(prefers-color-scheme: dark)">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<!-- When you change any app file, raise the ?v= number on these three lines AND the VERSION in sw.js. -->
-<link rel="stylesheet" href="styles.css?v=5">
+<title>SixSided Labs</title>
+<meta name="description" content="SixSided Labs LLC makes small, private apps for Android and the web, including Pen Click Morse.">
+<meta name="theme-color" content="#f7f7f5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111214" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  /* Layout: one centred column. The code-bracket hexagon logo leads; red is the
+     company accent, while the Pen Click Morse card keeps that app's own blue. */
+  @font-face { font-family: "Sora"; font-weight: 300; font-display: swap; src: url("fonts/sora-latin-300-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Sora"; font-weight: 600; font-display: swap; src: url("fonts/sora-latin-600-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Instrument Sans"; font-weight: 400; font-display: swap; src: url("../fonts/instrument-sans-latin-400-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Instrument Sans"; font-weight: 600; font-display: swap; src: url("../fonts/instrument-sans-latin-600-normal.woff2") format("woff2"); }
+
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #111214; --muted: #5e6066; --line: #e1e1dc;
+    --red: #e1203a; --red-ink: #ffffff; --app-blue: #1f5fd1;
+    --display: "Sora", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #111214; --panel: #1a1b1f; --ink: #f3f3f1; --muted: #a3a5ab; --line: #2b2d33;
+      --red: #ff4a5e; --red-ink: #111214; --app-blue: #6f9df1; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #111214; --panel: #1a1b1f; --ink: #f3f3f1; --muted: #a3a5ab; --line: #2b2d33;
+    --red: #ff4a5e; --red-ink: #111214; --app-blue: #6f9df1; color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 var(--body); }
+  .wrap { max-width: 760px; margin: 0 auto;
+    padding: max(28px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(48px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+    display: grid; gap: 64px; }
+
+  header img { display: block; height: 44px; width: auto; max-width: 100%; }
+
+  .intro h1 { font: 600 clamp(34px, 7vw, 52px)/1.08 var(--display); letter-spacing: -0.035em; margin: 0 0 18px; text-wrap: balance; max-width: 18ch; }
+  .intro p { margin: 0; color: var(--muted); max-width: 56ch; font-size: 18px; }
+
+  h2 { font: 600 13px var(--body); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 0 0 14px; }
+
+  .product { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px;
+    display: grid; grid-template-columns: 72px 1fr; gap: 18px; align-items: start; }
+  .product img { width: 72px; height: 72px; border-radius: 16px; }
+  .product h3 { font: 600 24px/1.15 var(--display); letter-spacing: -0.03em; margin: 2px 0 6px; }
+  .product p { margin: 0 0 14px; color: var(--muted); }
+  .code { display: flex; align-items: center; gap: 5px; margin-bottom: 14px; }
+  .code i { display: block; height: 8px; border-radius: 4px; background: var(--app-blue); }
+  .code .d { width: 8px; } .code .h { width: 22px; } .code .gap { width: 10px; background: none; }
+  .links { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; padding: 10px 16px; border-radius: 10px; font: 600 15px var(--body);
+    text-decoration: none; border: 1px solid var(--line); color: var(--ink); background: var(--panel); }
+  .btn.primary { background: var(--red); border-color: var(--red); color: var(--red-ink); }
+  .btn.soon { color: var(--muted); border-style: dashed; cursor: default; }
+  .btn:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+  @media (max-width: 480px) { .product { grid-template-columns: 1fr; } }
+
+  .points { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+  .points li { display: grid; grid-template-columns: 30px 1fr; gap: 12px; }
+  .points svg { width: 24px; height: 24px; margin-top: 3px; }
+  .points .l { stroke: var(--ink); } .points .r { stroke: var(--red); }
+  .points b { display: block; }
+  .points span { color: var(--muted); }
+
+  .contact dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; }
+  .contact dt { color: var(--muted); }
+  .contact dd { margin: 0; }
+  .contact a { color: var(--red); }
+
+  footer { border-top: 1px solid var(--line); padding-top: 18px; color: var(--muted); font-size: 14px; display: flex; gap: 16px; flex-wrap: wrap; }
+  footer a { color: inherit; }
+</style>
 </head>
 <body>
-<div class="app">
-  <header class="top">
-    <div class="brand"><img src="icons/icon.svg" alt="" width="28" height="28"><span>Pen Click <b>Morse</b></span></div>
-    <div class="tabs" role="tablist" aria-label="Mode">
-      <button role="tab" id="tab-decode" aria-selected="true" aria-controls="view-decode">Decode</button>
-      <button role="tab" id="tab-send" aria-selected="false" aria-controls="view-send">Send</button>
-      <button role="tab" id="tab-practice" aria-selected="false" aria-controls="view-practice">Practice</button>
-    </div>
-    <button class="icon-btn" id="openSettings" aria-label="Settings">
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
-    </button>
+<div class="wrap">
+  <header>
+    <picture>
+      <source srcset="sixsided-logo-reversed.svg" media="(prefers-color-scheme: dark)">
+      <img src="sixsided-logo.svg" alt="SixSided Labs" height="44">
+    </picture>
   </header>
 
-  <main>
-    <section id="view-decode" class="card message" role="tabpanel" aria-labelledby="tab-decode">
-      <div class="message-text" aria-live="polite"><span id="text"></span><span class="caret" aria-hidden="true"></span></div>
-      <div class="message-tools">
-        <button id="btnSpace">Space</button>
-        <button id="btnBack">Delete</button>
-        <button id="btnCopy">Copy</button>
-        <button id="btnShare" hidden>Share</button>
-        <button id="btnClear">Clear</button>
+  <section class="intro">
+    <h1>Small apps for the things you do with your hands.</h1>
+    <p>SixSided Labs LLC builds focused, private apps for Android and the web. Each one does a single job, works on your device, and doesn't ask for an account.</p>
+  </section>
+
+  <section>
+    <h2>Our apps</h2>
+    <article class="product">
+      <img src="../icons/icon-192.png" alt="Pen Click Morse icon" width="72" height="72">
+      <div>
+        <h3>Pen Click Morse</h3>
+        <div class="code" aria-label="P E N in Morse code"><i class="d"></i><i class="h"></i><i class="h"></i><i class="d"></i><i class="gap"></i><i class="d"></i><i class="gap"></i><i class="h"></i><i class="d"></i></div>
+        <p>Send Morse code by clicking a pen. Your phone listens and turns the clicks into text. Send secret messages to friends, or practice until you can do it without looking.</p>
+        <div class="links">
+          <a class="btn primary" href="../">Open the web app</a>
+          <span class="btn soon" title="Coming soon">Google Play: coming soon</span>
+        </div>
       </div>
-    </section>
+    </article>
+  </section>
 
-    <section id="view-send" class="card send" role="tabpanel" aria-labelledby="tab-send" hidden>
-      <label class="eyebrow" for="sendText">Message to send</label>
-      <textarea id="sendText" rows="2" maxlength="80" placeholder="Type a message, like MEET AT 3" autocapitalize="characters" autocomplete="off" spellcheck="false"></textarea>
-      <div class="send-code" id="sendCode" aria-hidden="true"></div>
-      
-      <button class="btn primary wide" id="btnShareMsg">
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>
-        Send to a contact
-      </button>
-      <p class="hint" id="shareHint">Pick someone from your contacts in Messages, WhatsApp, email or any app. They get a link that plays your message in Morse.</p>
-      <div class="or-line"><span>or, for a phone right next to you</span></div>
-      <div class="send-opts" role="group" aria-label="Play out loud as">
-        <label class="chip"><input type="checkbox" id="optSound"><span>Clicks</span></label>
-        <label class="chip"><input type="checkbox" id="optVibrate"><span>Vibrate</span></label>
-        <label class="chip"><input type="checkbox" id="optFlash"><span>Flash</span></label>
-      </div>
-      <button class="btn wide" id="btnPlay">Play out loud</button>
-      <p class="hint" id="sendHint">Hold this phone next to the other phone, with your volume up. The other phone should be on Decode and listening.</p>
-    </section>
+  <section>
+    <h2>How we build</h2>
+    <ul class="points">
+      <li>
+        <svg viewBox="0 0 100 100" aria-hidden="true" fill="none" stroke-width="11"><polyline class="l" points="42.7,12.2 13.6,29 13.6,71 42.7,87.8"></polyline><polyline class="r" points="57.3,12.2 86.4,29 86.4,71 57.3,87.8"></polyline></svg>
+        <div><b>One job each</b><span>An app should be quick to learn and hard to outgrow.</span></div>
+      </li>
+      <li>
+        <svg viewBox="0 0 100 100" aria-hidden="true" fill="none" stroke-width="11"><polyline class="l" points="42.7,12.2 13.6,29 13.6,71 42.7,87.8"></polyline><polyline class="r" points="57.3,12.2 86.4,29 86.4,71 57.3,87.8"></polyline></svg>
+        <div><b>Private by design</b><span>Our apps work on your device. No accounts, no ads, no tracking.</span></div>
+      </li>
+      <li>
+        <svg viewBox="0 0 100 100" aria-hidden="true" fill="none" stroke-width="11"><polyline class="l" points="42.7,12.2 13.6,29 13.6,71 42.7,87.8"></polyline><polyline class="r" points="57.3,12.2 86.4,29 86.4,71 57.3,87.8"></polyline></svg>
+        <div><b>Works offline</b><span>Once installed, they keep working without a connection.</span></div>
+      </li>
+    </ul>
+  </section>
 
-    <section id="view-practice" class="card practice" role="tabpanel" aria-labelledby="tab-practice" hidden>
-      <p class="eyebrow">Send this letter</p>
-      <div class="target" id="target">K</div>
-      <div class="target-code" id="targetCode">–·–</div>
-      <p class="practice-result" id="practiceResult" aria-live="polite">One click is a dot, a double click is a dash.</p>
-      <div class="practice-tools">
-        <button id="btnHint">Hide pattern</button>
-        <button id="btnSkip">Skip</button>
-        <span class="streak">Streak <b id="streak">0</b></span>
-      </div>
-    </section>
+  <section class="contact">
+    <h2>Contact</h2>
+    <dl>
+      <dt>Company</dt><dd>SixSided Labs LLC</dd>
+      <dt>Email</dt><dd><a href="mailto:tkilburn34@gmail.com">tkilburn34@gmail.com</a></dd>
+      <!-- Optional: add your business mailing address, matching your state registration exactly:
+      <dt>Address</dt><dd>123 Example St, City, State ZIP</dd> -->
+    </dl>
+  </section>
 
-    <section class="now" aria-live="polite">
-      <span class="sym" id="sym"></span>
-      <span class="guess" id="guess">Tap below or start listening</span>
-    </section>
-
-    <div class="tape" aria-hidden="true"><canvas id="tape"></canvas></div>
-    <p class="status" id="status"><span class="dot"></span><span id="statusText">Microphone off</span></p>
-  </main>
-
-  <footer class="controls">
-    <button class="pad" id="pad">Tap here to click<small>or press the space bar</small></button>
-    <button class="mic" id="mic" aria-pressed="false">
-      <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M12 14.5a3.5 3.5 0 0 0 3.5-3.5V5.5a3.5 3.5 0 1 0-7 0V11a3.5 3.5 0 0 0 3.5 3.5Zm6-3.5h-1.6a4.4 4.4 0 0 1-8.8 0H6a6 6 0 0 0 5.2 5.9V20h1.6v-3.1A6 6 0 0 0 18 11Z"/></svg>
-      <span id="micLabel">Listen</span>
-    </button>
+  <footer>
+    <span>© 2026 SixSided Labs LLC</span>
+    <a href="../privacy.html">Pen Click Morse privacy policy</a>
   </footer>
 </div>
-
-<div class="flash-overlay" id="flashOverlay" hidden></div>
-
-<div class="limit" id="limitBanner" hidden>
-  <p><b>That's the end of the free web demo.</b> Get the Android app to keep decoding with no limits.</p>
-  <a class="btn primary" id="playLink" href="#" target="_blank" rel="noopener">Get it on Google Play</a>
-</div>
-
-<!-- A message someone shared with you -->
-<dialog id="received" class="sheet" aria-labelledby="recvTitle">
-  <div class="sheet-head"><h2 id="recvTitle">You got a Morse message</h2><button class="icon-btn" data-close aria-label="Close">✕</button></div>
-  <div class="sheet-body">
-    <p>Someone sent you a message in pen-click Morse. Listen to it, feel it, or work out the code before you reveal it.</p>
-    <div class="recv-code" id="recvCode" aria-label="The message in Morse code"></div>
-    <div class="row">
-      <button class="btn" id="recvPlay">Play clicks</button>
-      <button class="btn" id="recvVibrate">Vibrate it</button>
-    </div>
-    <div class="recv-text" id="recvText" hidden></div>
-    <button class="btn primary wide" id="recvReveal">Reveal message</button>
-    <button class="btn wide" id="recvReply">Reply in Morse</button>
-  </div>
-</dialog>
-
-<!-- Settings -->
-<dialog id="settings" class="sheet" aria-labelledby="settingsTitle">
-  <div class="sheet-head"><h2 id="settingsTitle">Settings</h2><button class="icon-btn" data-close aria-label="Close">✕</button></div>
-  <div class="sheet-body">
-    <button class="btn primary wide" id="btnTeach">Teach it your pen</button>
-    <p class="hint">Clicks your pen a few times so the app learns its sound and your double-click speed. Best done once in each new place.</p>
-
-    <h3>Hearing</h3>
-    <div class="field">
-      <label for="sSnr">Click threshold <output id="oSnr"></output></label>
-      <input type="range" id="sSnr" min="6" max="30" step="1">
-      <small>How much louder than the room a click must be. Lower hears quieter pens; higher ignores more noise.</small>
-    </div>
-    <div class="field">
-      <label for="sEcho">Echo filter <output id="oEcho"></output></label>
-      <input type="range" id="sEcho" min="40" max="300" step="10">
-      <small>Ignores the softer second click many pens make when you let go.</small>
-    </div>
-    <label class="toggle"><input type="checkbox" id="sKnock"><span>Ignore table knocks and bumps</span></label>
-
-    <h3>Timing</h3>
-    <div class="field">
-      <label for="sDash">Double-click window <output id="oDash"></output></label>
-      <input type="range" id="sDash" min="150" max="650" step="10">
-      <small>Two clicks closer than this make a dash.</small>
-    </div>
-    <div class="field">
-      <label for="sLetter">Letter pause <output id="oLetter"></output></label>
-      <input type="range" id="sLetter" min="500" max="2500" step="50">
-      <small>Silence this long ends a letter.</small>
-    </div>
-    <div class="field">
-      <label for="sWord">Word pause <output id="oWord"></output></label>
-      <input type="range" id="sWord" min="1500" max="6000" step="100">
-      <small>Silence this long adds a space.</small>
-    </div>
-
-    <h3>Feel</h3>
-    <label class="toggle"><input type="checkbox" id="sVibrate"><span>Vibrate when a click is heard</span></label>
-
-    <div class="sheet-links">
-      <button class="btn" id="btnChart">Morse code chart</button>
-      <a class="btn" href="privacy.html">Privacy</a>
-      <button class="btn" id="btnReset">Reset settings</button>
-    </div>
-  </div>
-</dialog>
-
-<!-- Code chart -->
-<dialog id="chartDlg" class="sheet" aria-labelledby="chartTitle">
-  <div class="sheet-head"><h2 id="chartTitle">Morse code</h2><button class="icon-btn" data-close aria-label="Close">✕</button></div>
-  <div class="sheet-body">
-    <ul class="how">
-      <li><b>click</b><span>dot ·</span></li>
-      <li><b>click-click</b><span>dash –</span></li>
-      <li><b>short pause</b><span>next letter</span></li>
-      <li><b>long pause</b><span>space</span></li>
-      <li><b>6 clicks</b><span>erase last letter</span></li>
-    </ul>
-    <div class="chart" id="chart"></div>
-  </div>
-</dialog>
-
-<!-- First-run setup / pen training -->
-<dialog id="setup" class="sheet setup" aria-labelledby="setupTitle">
-  <div class="sheet-head"><h2 id="setupTitle">Teach it your pen</h2><button class="icon-btn" data-close aria-label="Close">✕</button></div>
-  <div class="sheet-body" id="setupBody"></div>
-</dialog>
-
-<script src="decoder.js?v=5"></script>
-<script src="app.js?v=5"></script>
 </body>
 </html>
