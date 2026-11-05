@@ -3,7 +3,7 @@
 // Updating the app: raise V (and VERSION) here AND the ?v= number in index.html,
 // so every phone switches to the new files together.
 const V = "?v=5";
-const VERSION = "pcm-v5";
+const VERSION = "pcm-v6";
 const SHELL = [
   "./", "index.html", "styles.css" + V, "decoder.js" + V, "app.js" + V, "click-worklet.js" + V,
   "manifest.webmanifest", "privacy.html", "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png",
@@ -37,7 +37,10 @@ self.addEventListener("fetch", (e) => {
       const res = req.mode === "navigate"
         ? await fetch(url.href, { cache: "no-cache", credentials: "same-origin" })
         : await fetch(req);
-      if (res.ok) cache.put(req, res.clone());
+      // A redirect (e.g. /sixsided → /sixsided/) can't be handed to a page
+      // load as-is; send the browser to the final address instead.
+      if (res.redirected && req.mode === "navigate") return Response.redirect(res.url, 302);
+      if (res.ok && !res.redirected) cache.put(req, res.clone());
       return res;
     } catch {
       return (await cache.match(req)) ||
