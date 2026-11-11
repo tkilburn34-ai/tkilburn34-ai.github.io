@@ -11,7 +11,7 @@
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <!-- When you change any app file, raise the ?v= number on these three lines AND the VERSION in sw.js. -->
-<link rel="stylesheet" href="styles.css?v=5">
+<link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
 <div class="app">
@@ -30,6 +30,14 @@
   <main>
     <section id="view-decode" class="card message" role="tabpanel" aria-labelledby="tab-decode">
       <div class="message-text" aria-live="polite"><span id="text"></span><span class="caret" aria-hidden="true"></span></div>
+      <div class="empty-hint">
+        <p>Click a pen near your phone, or tap the pad below.</p>
+        <ul class="legend" aria-label="How to send">
+          <li><span>click</span><i class="m-dot" aria-label="dot"></i></li>
+          <li><span>click-click</span><i class="m-dash" aria-label="dash"></i></li>
+          <li><span>pause</span><b>next letter</b></li>
+        </ul>
+      </div>
       <div class="message-tools">
         <button id="btnSpace">Space</button>
         <button id="btnBack">Delete</button>
@@ -156,6 +164,7 @@
       <button class="btn" id="btnChart">Morse code chart</button>
       <a class="btn" href="privacy.html">Privacy</a>
       <button class="btn" id="btnReset">Reset settings</button>
+      <a class="btn" href="sixsided/">Made by SixSided Labs</a>
     </div>
   </div>
 </dialog>
@@ -181,7 +190,7 @@
   <div class="sheet-body" id="setupBody"></div>
 </dialog>
 
-<script src="decoder.js?v=5"></script>
-<script src="app.js?v=5"></script>
+<script src="decoder.js?v=6"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>
