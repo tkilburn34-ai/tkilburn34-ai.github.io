@@ -7,7 +7,7 @@
 // points people to the paid app. Inside the Android app there is no limit.
 // ---------------------------------------------------------------------------
 const CONFIG = {
-  PLAY_URL: "",
+  PLAY_URL: "https://play.google.com/store/apps/details?id=io.github.tkilburn34ai.penclickmorse",
   WEB_LETTER_LIMIT: 30,
 };
 
