@@ -2,8 +2,8 @@
 //
 // Updating the app: raise V (and VERSION) here AND the ?v= number in index.html,
 // so every phone switches to the new files together.
-const V = "?v=6";
-const VERSION = "pcm-v7";
+const V = "?v=7";
+const VERSION = "pcm-v8";
 const SHELL = [
   "./", "index.html", "styles.css" + V, "decoder.js" + V, "app.js" + V, "click-worklet.js" + V,
   "manifest.webmanifest", "privacy.html", "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png",
