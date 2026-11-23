@@ -234,6 +234,7 @@ function flashStatus(msg) {
 function showLimit() {
   $("playLink").href = CONFIG.PLAY_URL;
   $("limitBanner").hidden = false;
+  if (listening) stopMic();
 }
 
 // ---------------------------------------------------------------------------
